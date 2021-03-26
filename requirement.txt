@@ -1,0 +1,8 @@
+pandas
+addict
+sklearn
+opencv-python
+pytorch_warmup
+scikit-image
+tqdm
+termcolor

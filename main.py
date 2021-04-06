@@ -26,6 +26,7 @@ def main():
 
     cfg.load_from = args.load_from
     cfg.finetune_from = args.finetune_from
+    cfg.view = args.view
 
     cfg.work_dirs = args.work_dirs + '/' + cfg.dataset.train.type
 
@@ -56,6 +57,10 @@ def parse_args():
         '--validate',
         action='store_true',
         help='whether to evaluate the checkpoint during training')
+    parser.add_argument(
+        '--view',
+        action='store_true',
+        help='whether to show visualization result')
     parser.add_argument('--gpus', nargs='+', type=int, default='0')
     parser.add_argument('--seed', type=int,
                         default=None, help='random seed')

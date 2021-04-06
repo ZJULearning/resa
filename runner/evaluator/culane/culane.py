@@ -8,7 +8,6 @@ import json
 import os
 import subprocess
 from shutil import rmtree
-from .prob2lines import prob2lines
 import cv2
 import numpy as np
 
@@ -96,42 +95,42 @@ class CULane(nn.Module):
             5, 5, 9, padding=4, bias=False, groups=5).cuda()
         torch.nn.init.constant_(self.blur.weight, 1 / 81)
         self.logger = get_logger('resa')
-        self.prob_dir = os.path.join(self.cfg.work_dir, 'probmap')
         self.out_dir = os.path.join(self.cfg.work_dir, 'lines')
+        if cfg.view:
+            self.view_dir = os.path.join(self.cfg.work_dir, 'vis')
 
-
-    def evaluate(self, output, batch):
+    def evaluate(self, dataset, output, batch):
         seg, exists = output['seg'], output['exist']
-        predictmaps = F.softmax(seg, dim=1)
+        predictmaps = F.softmax(seg, dim=1).cpu().numpy()
+        exists = exists.cpu().numpy()
         batch_size = seg.size(0)
-        img_name = batch['meta']['file_name']
+        img_name = batch['meta']['img_name']
+        img_path = batch['meta']['full_img_path']
         for i in range(batch_size):
-            file_name = self.prob_dir + img_name[i][:-4]
-            prefix = '/'.join(file_name.split('/')[:-1])
-            if not os.path.exists(prefix):
-                os.makedirs(prefix)
-
-            # existence label
-            exist = exists[i] > 0.5
-            f = open(file_name + '.exist.txt', 'w')
-            f.write('{:d} {:d} {:d} {:d}'.format(
-                exist[0], exist[1], exist[2], exist[3]))
+            coords = dataset.probmap2lane(predictmaps[i], exists[i])
+            outname = self.out_dir + img_name[i][:-4] + '.lines.txt'
+            outdir = os.path.dirname(outname)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            f = open(outname, 'w')
+            for coord in coords:
+                for x, y in coord:
+                    if x < 0 and y < 0:
+                        continue
+                    f.write('%d %d ' % (x, y))
+                f.write('\n')
             f.close()
 
-            predictmap = predictmaps[i, ...]
-            predictmap = predictmap * 255
-            predictmap = self.blur(predictmap.unsqueeze(0)).squeeze()
-            predictmap = np.array(predictmap.cpu())
-            for j in range(1, 5):
-                cv2.imwrite(
-                    file_name + '_{0}_avg.png'.format(j), predictmap[j])
+            if self.cfg.view:
+                img = cv2.imread(img_path[i]).astype(np.float32)
+                dataset.view(img, coords, self.view_dir+img_name[i])
 
 
     def summarize(self):
         self.logger.info('summarize result...')
         eval_list_path = os.path.join(
             self.cfg.dataset_path, "list", self.cfg.dataset.val.data_list)
-        prob2lines(self.prob_dir, self.out_dir, eval_list_path, self.cfg)
+        #prob2lines(self.prob_dir, self.out_dir, eval_list_path, self.cfg)
         res = call_culane_eval(self.cfg.dataset_path, output_path=self.cfg.work_dir)
         TP,FP,FN = 0,0,0
         out_str = 'Copypaste: '
@@ -156,5 +155,4 @@ class CULane(nn.Module):
         self.logger.info(out_str)
 
         # delete the tmp output
-        rmtree(self.prob_dir)
         rmtree(self.out_dir)

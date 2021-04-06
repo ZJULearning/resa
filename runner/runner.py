@@ -92,7 +92,7 @@ class Runner(object):
             data = self.to_cuda(data)
             with torch.no_grad():
                 output = self.net(data['img'])
-                self.evaluator.evaluate(output, data)
+                self.evaluator.evaluate(val_loader.dataset, output, data)
 
         metric = self.evaluator.summarize()
         if not metric:

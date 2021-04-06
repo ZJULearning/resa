@@ -118,6 +118,15 @@ We provide two trained ResNet models on CULane and Tusimple, downloading our bes
 CULane: [GoogleDrive](https://drive.google.com/file/d/1pcqq9lpJ4ixJgFVFndlPe42VgVsjgn0Q/view?usp=sharing)/[BaiduDrive(code:rlwj)](https://pan.baidu.com/s/1ODKAZxpKrZIPXyaNnxcV3g)
 )
 
+## Visualization
+Just add `--view`.
+
+For example:
+```Shell
+python main.py configs/culane.py --validate --load_from culane_resnet50.pth --gpus 0 1 2 3 --view
+```
+You will get the result in the directory: `work_dirs/[DATASET]/xxx/vis`.
+
 ## Citation
 
 ```BibTeX

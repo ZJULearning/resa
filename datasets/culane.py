@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 import numpy as np
 import torchvision
@@ -12,13 +13,15 @@ import torch
 class CULane(BaseDataset):
     def __init__(self, img_path, data_list, cfg=None):
         super().__init__(img_path, data_list, cfg=cfg)
+        self.ori_imgh = 590
+        self.ori_imgw = 1640
 
     def init(self):
         with open(osp.join(self.list_path, self.data_list)) as f:
             for line in f:
                 line_split = line.strip().split(" ")
-                self.img.append(line_split[0])
-                self.img_list.append(self.img_path + line_split[0])
+                self.img_name_list.append(line_split[0])
+                self.full_img_path_list.append(self.img_path + line_split[0])
                 self.label_list.append(self.img_path + line_split[1])
                 self.exist_list.append(
                     np.array([int(line_split[2]), int(line_split[3]),
@@ -34,23 +37,34 @@ class CULane(BaseDataset):
         ])
         return train_transform
 
-    # def __getitem__(self, idx):
-    #     img = cv2.imread(self.img_list[idx]).astype(np.float32)
-    #     label = cv2.imread(self.label_list[idx], cv2.IMREAD_UNCHANGED)
-    #     label = label.squeeze()
+    def probmap2lane(self, probmaps, exists, pts=18):
+        coords = []
+        probmaps = probmaps[1:, ...]
+        exists = exists > 0.5
+        for probmap, exist in zip(probmaps, exists):
+            if exist == 0:
+                continue
+            probmap = cv2.blur(probmap, (9, 9), borderType=cv2.BORDER_REPLICATE)
+            thr = 0.3
+            coordinate = np.zeros(pts)
+            cut_height = self.cfg.cut_height
+            for i in range(pts):
+                line = probmap[round(
+                    self.cfg.img_height-i*20/(self.ori_imgh-cut_height)*self.cfg.img_height)-1]
 
-    #     img = img[self.cfg.cut_height:, :, :]
-    #     label = label[self.cfg.cut_height:, :]
-
-    #     exist = self.exist_list[idx]
-
-    #     if self.transform:
-    #         img, label = self.transform((img, label))
-
-    #     img = torch.from_numpy(img).permute(2, 0, 1).contiguous().float()
-    #     label = torch.from_numpy(label).contiguous().long()
-    #     meta = {'file_name': self.img[idx]}
-
-    #     data = {'img': img, 'label': label,
-    #             'exist': exist, 'meta': meta}
-    #     return data
+                if np.max(line) > thr:
+                    coordinate[i] = np.argmax(line)+1
+            if np.sum(coordinate > 0) < 2:
+                continue
+    
+            img_coord = np.zeros((pts, 2))
+            img_coord[:, :] = -1
+            for idx, value in enumerate(coordinate):
+                if value > 0:
+                    img_coord[idx][0] = round(value*self.ori_imgw/self.cfg.img_width-1)
+                    img_coord[idx][1] = round(self.ori_imgh-idx*20-1)
+    
+            img_coord = img_coord.astype(int)
+            coords.append(img_coord)
+    
+        return coords

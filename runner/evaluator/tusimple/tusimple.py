@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from runner.logger import get_logger
 
 from runner.registry import EVALUATOR 
-from .getLane import prob2lines_tusimple
 import json
 import os
+import cv2
 
 from .lane import LaneEval
 
@@ -38,14 +38,17 @@ class Tusimple(nn.Module):
         self.dump_to_json = [] 
         self.thresh = cfg.evaluator.thresh
         self.logger = get_logger('resa')
+        if cfg.view:
+            self.view_dir = os.path.join(self.cfg.work_dir, 'vis')
 
-    def evaluate_pred(self, seg_pred, exist_pred, img_name, thr):
+    def evaluate_pred(self, dataset, seg_pred, exist_pred, batch):
+        img_name = batch['meta']['img_name']
+        img_path = batch['meta']['full_img_path']
         for b in range(len(seg_pred)):
             seg = seg_pred[b]
             exist = [1 if exist_pred[b, i] >
                      0.5 else 0 for i in range(self.cfg.num_classes-1)]
-            lane_coords = prob2lines_tusimple(
-                seg, exist, resize_shape=(720, 1280), y_px_gap=10, pts=56, thresh = thr, cfg=self.cfg)
+            lane_coords = dataset.probmap2lane(seg, exist, thresh = self.thresh)
             for i in range(len(lane_coords)):
                 lane_coords[i] = sorted(
                     lane_coords[i], key=lambda pair: pair[1])
@@ -78,15 +81,19 @@ class Tusimple(nn.Module):
             for (x, y) in lane_coords[0]:
                 json_dict['h_sample'].append(y)
             self.dump_to_json.append(json.dumps(json_dict))
+            if self.cfg.view:
+                img = cv2.imread(img_path[b])
+                new_img_name = img_name[b].replace('/', '_')
+                save_dir = os.path.join(self.view_dir, new_img_name)
+                dataset.view(img, lane_coords, save_dir)
 
 
-    def evaluate(self, output, batch):
+    def evaluate(self, dataset, output, batch):
         seg_pred, exist_pred = output['seg'], output['exist']
         seg_pred = F.softmax(seg_pred, dim=1)
         seg_pred = seg_pred.detach().cpu().numpy()
         exist_pred = exist_pred.detach().cpu().numpy()
-        img_name = batch['meta']['file_name']
-        self.evaluate_pred(seg_pred, exist_pred, img_name, self.thresh)
+        self.evaluate_pred(dataset, seg_pred, exist_pred, batch)
 
     def summarize(self):
         best_acc = 0

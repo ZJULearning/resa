@@ -67,7 +67,7 @@ and enables each pixel to gather global information.
     For Tusimple, the segmentation annotation is not provided, hence we need to generate segmentation from the json annotation. 
 
     ```Shell
-    python scripts/generate_seg_tusimple.py --root $TUSIMPLEROOT
+    python tools/generate_seg_tusimple.py --root $TUSIMPLEROOT
     # this will generate seg_label directory
     ```
 

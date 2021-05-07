@@ -19,8 +19,9 @@ class SampleResize(object):
         out = list()
         out.append(cv2.resize(sample[0], self.size,
                               interpolation=cv2.INTER_CUBIC))
-        out.append(cv2.resize(sample[1], self.size,
-                              interpolation=cv2.INTER_NEAREST))
+        if len(sample) > 1:
+            out.append(cv2.resize(sample[1], self.size,
+                                  interpolation=cv2.INTER_NEAREST))
         return out
 
 

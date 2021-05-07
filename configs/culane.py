@@ -71,12 +71,12 @@ dataset = dict(
     val=dict(
         type='CULane',
         img_path=dataset_path,
-        data_list='test_img.txt',
+        data_list='test.txt',
     ),
     test=dict(
         type='CULane',
         img_path=dataset_path,
-        data_list='test_img.txt',
+        data_list='test.txt',
     )
 )
 

@@ -61,24 +61,26 @@ class BaseDataset(Dataset):
 
     def __getitem__(self, idx):
         img = cv2.imread(self.full_img_path_list[idx]).astype(np.float32)
-        label = cv2.imread(self.label_list[idx], cv2.IMREAD_UNCHANGED)
-        if len(label.shape) > 2:
-            label = label[:, :, 0]
-        label = label.squeeze()
-
         img = img[self.cfg.cut_height:, :, :]
-        label = label[self.cfg.cut_height:, :]
 
-        exist = self.exist_list[idx]
-
-        if self.transform:
-            img, label = self.transform((img, label))
+        if not self.is_testing:
+            label = cv2.imread(self.label_list[idx], cv2.IMREAD_UNCHANGED)
+            if len(label.shape) > 2:
+                label = label[:, :, 0]
+            label = label.squeeze()
+            label = label[self.cfg.cut_height:, :]
+            exist = self.exist_list[idx]
+            if self.transform:
+                img, label = self.transform((img, label))
+            label = torch.from_numpy(label).contiguous().long()
+        else:
+            img, = self.transform((img,))
 
         img = torch.from_numpy(img).permute(2, 0, 1).contiguous().float()
-        label = torch.from_numpy(label).contiguous().long()
         meta = {'full_img_path': self.full_img_path_list[idx],
                 'img_name': self.img_name_list[idx]}
 
-        data = {'img': img, 'label': label,
-                'exist': exist, 'meta': meta}
+        data = {'img': img, 'meta': meta}
+        if not self.is_testing:
+            data.update({'label': label, 'exist': exist})
         return data

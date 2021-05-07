@@ -22,6 +22,8 @@ class CULane(BaseDataset):
                 line_split = line.strip().split(" ")
                 self.img_name_list.append(line_split[0])
                 self.full_img_path_list.append(self.img_path + line_split[0])
+                if self.is_testing:
+                    continue
                 self.label_list.append(self.img_path + line_split[1])
                 self.exist_list.append(
                     np.array([int(line_split[2]), int(line_split[3]),

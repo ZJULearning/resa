@@ -3,6 +3,8 @@ PyTorch implementation of the paper "[RESA: Recurrent Feature-Shift Aggregator f
 
 Our paper has been accepted by AAAI2021.
 
+**News**: We also release RESA on [LaneDet](https://github.com/Turoad/lanedet). It's also recommended for you to try LaneDet.
+
 ## Introduction
 ![intro](intro.png "intro")
 - RESA shifts sliced

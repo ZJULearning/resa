@@ -16,14 +16,14 @@ class BaseDataset(Dataset):
         self.img_path = img_path
         self.list_path = osp.join(img_path, list_path)
         self.data_list = data_list
-        self.is_testing = ('test' in data_list)
+        self.is_training = ('train' in data_list)
 
         self.img_name_list = []
         self.full_img_path_list = []
         self.label_list = []
         self.exist_list = []
 
-        self.transform = self.transform_val() if self.is_testing else self.transform_train()
+        self.transform = self.transform_train() if self.is_training else self.transform_val()
 
         self.init()
 
@@ -63,7 +63,7 @@ class BaseDataset(Dataset):
         img = cv2.imread(self.full_img_path_list[idx]).astype(np.float32)
         img = img[self.cfg.cut_height:, :, :]
 
-        if not self.is_testing:
+        if self.is_training:
             label = cv2.imread(self.label_list[idx], cv2.IMREAD_UNCHANGED)
             if len(label.shape) > 2:
                 label = label[:, :, 0]
@@ -81,6 +81,6 @@ class BaseDataset(Dataset):
                 'img_name': self.img_name_list[idx]}
 
         data = {'img': img, 'meta': meta}
-        if not self.is_testing:
+        if self.is_training:
             data.update({'label': label, 'exist': exist})
         return data

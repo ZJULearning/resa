@@ -130,15 +130,16 @@ python main.py configs/culane.py --validate --load_from culane_resnet50.pth --gp
 You will get the result in the directory: `work_dirs/[DATASET]/xxx/vis`.
 
 ## Citation
-
+If you use our method, please consider citing:
 ```BibTeX
-@misc{zheng2020resa,
-      title={RESA: Recurrent Feature-Shift Aggregator for Lane Detection}, 
-      author={Tu Zheng and Hao Fang and Yi Zhang and Wenjian Tang and Zheng Yang and Haifeng Liu and Deng Cai},
-      year={2020},
-      eprint={2008.13719},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@inproceedings{zheng2021resa,
+  title={RESA: Recurrent Feature-Shift Aggregator for Lane Detection},
+  author={Zheng, Tu and Fang, Hao and Zhang, Yi and Tang, Wenjian and Yang, Zheng and Liu, Haifeng and Cai, Deng},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={35},
+  number={4},
+  pages={3547--3554},
+  year={2021}
 }
 ```
 

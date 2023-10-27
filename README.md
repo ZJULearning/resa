@@ -36,7 +36,7 @@ and enables each pixel to gather global information.
     pip install torch torchvision
 
     # Install python packages
-    pip install -r requirements.txt
+    pip install -r requirement.txt
     ```
 
 4. Data preparation
